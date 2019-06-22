@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
 
 	"github.com/icio/mkcert"
 )
@@ -28,10 +27,11 @@ func main() {
 		// RequireTrusted(true) tells Exec to return an error if the CA isn't
 		// in the trust stores.
 		mkcert.RequireTrusted(true),
+		mkcert.Directory(dir),
 		// CertFile and KeyFile override the default behaviour of generating
 		// the keys in the local directory.
-		mkcert.CertFile(filepath.Join(dir, "cert.pem")),
-		mkcert.KeyFile(filepath.Join(dir, "key.pem")),
+		// mkcert.CertFile(filepath.Join(dir, "cert.pem")),
+		// mkcert.KeyFile(filepath.Join(dir, "key.pem")),
 	)
 	if err != nil {
 		log.Fatal(err)

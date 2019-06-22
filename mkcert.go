@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 )
 
@@ -60,6 +61,7 @@ func Exec(opts ...Opt) (Cert, error) {
 		args = append(args, "-key-file", p.keyFile)
 	}
 	cmd := exec.Command("mkcert", append(args, p.domains...)...)
+	cmd.Dir = p.dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return Cert{}, fmt.Errorf("mkcert: %s", err)
@@ -73,6 +75,14 @@ func Exec(opts ...Opt) (Cert, error) {
 		File:    certFile,
 		KeyFile: keyFile,
 	}
+	if cmd.Dir != "" {
+		if !filepath.IsAbs(cert.File) {
+			cert.File = filepath.Join(cmd.Dir, cert.File)
+		}
+		if !filepath.IsAbs(cert.KeyFile) {
+			cert.KeyFile = filepath.Join(cmd.Dir, cert.KeyFile)
+		}
+	}
 	if !cert.Trusted && p.requireTrust {
 		err = fmt.Errorf("mkcert: CA at %s not trusted, run mkcert -install", cert.CARoot)
 	}
@@ -80,6 +90,7 @@ func Exec(opts ...Opt) (Cert, error) {
 }
 
 type params struct {
+	dir          string
 	certFile     string
 	keyFile      string
 	domains      []string
@@ -96,6 +107,13 @@ func Domains(domains ...string) Opt {
 // RequireTrusted indicates whether Exec errors if the CA is not trusted.
 func RequireTrusted(req bool) Opt {
 	return func(p *params) { p.requireTrust = req }
+}
+
+// Directory specifies the working directory of mkcert, and is the path relative
+// to which CertFile and KeyFile are relative to, if specified. When blank,
+// defaults to the current directory.
+func Directory(path string) Opt {
+	return func(p *params) { p.dir = path }
 }
 
 // CertFile overrides the location of the generated certificate.

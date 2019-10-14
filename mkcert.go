@@ -63,8 +63,12 @@ func Exec(opts ...Opt) (Cert, error) {
 	cmd := exec.Command("mkcert", append(args, p.domains...)...)
 	cmd.Dir = p.dir
 	out, err := cmd.CombinedOutput()
+
 	if err != nil {
-		return Cert{}, fmt.Errorf("mkcert: %s", err)
+		if perr, ok := err.(*exec.ExitError); ok {
+			perr.Stderr = out
+		}
+		return Cert{}, fmt.Errorf("mkcert: %w", err)
 	}
 
 	certFile, keyFile := parseFiles(out)

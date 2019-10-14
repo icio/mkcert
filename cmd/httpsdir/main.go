@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 
 	"github.com/icio/mkcert"
 )
@@ -34,7 +37,13 @@ func main() {
 		// mkcert.KeyFile(filepath.Join(dir, "key.pem")),
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+
+		var perr *exec.ExitError
+		if errors.As(err, &perr) {
+			log.Println("mkcert stderr:", string(perr.Stderr))
+		}
+		os.Exit(1)
 	}
 
 	log.Printf("Using certificate: %#v", cert)
